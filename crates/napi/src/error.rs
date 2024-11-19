@@ -325,6 +325,7 @@ macro_rules! impl_object_methods {
         };
         #[cfg(debug_assertions)]
         let throw_status = unsafe { sys::napi_throw(env, js_error) };
+        println!("I'm throwing");
         unsafe { sys::napi_throw(env, js_error) };
         #[cfg(debug_assertions)]
         assert!(
