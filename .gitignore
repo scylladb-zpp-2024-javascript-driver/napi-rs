@@ -166,3 +166,6 @@ bench.txt
 !.yarn/sdks
 !.yarn/versions
 .vscode/
+
+# 
+__snapshots__/
