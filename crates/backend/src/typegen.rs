@@ -11,7 +11,7 @@ mod r#enum;
 mod r#fn;
 pub(crate) mod r#struct;
 
-use syn::{PathSegment, Type, TypePath, TypeSlice};
+use syn::{GenericArgument, PathSegment, Type, TypePath, TypeSlice};
 
 pub static NAPI_RS_CLI_VERSION: LazyLock<semver::Version> = LazyLock::new(|| {
   let version = env::var("CARGO_CFG_NAPI_RS_CLI_VERSION").unwrap_or_else(|_| "0.0.0".to_string());
@@ -300,9 +300,10 @@ pub fn ty_to_ts_type(
   is_struct_field: bool,
   convert_tuple_to_variadic: bool,
 ) -> (String, bool) {
-  match ty {
+  let res = match ty {
     Type::Reference(r) => ty_to_ts_type(&r.elem, is_return_ty, is_struct_field, false),
     Type::Tuple(tuple) => {
+      println!("Tuple Debug: {:?}", tuple);
       if tuple.elems.is_empty() {
         if convert_tuple_to_variadic {
           if is_return_ty {
@@ -344,12 +345,30 @@ pub fn ty_to_ts_type(
       }
     }
     Type::Path(syn::TypePath { qself: None, path }) => {
+      println!("Debug: {:?}", path);
       let mut ts_ty = None;
 
       if let Some(syn::PathSegment { ident, arguments }) = path.segments.last() {
         let rust_ty = ident.to_string();
+        println!("Ex type: {:?}", rust_ty);
         let is_ts_union_type = is_ts_union_type(&rust_ty);
         let mut is_function_with_lifetime = false;
+        let z =match arguments {
+            syn::PathArguments::AngleBracketed(v) => {v.args.get(0)},
+            _ => {None}
+        };
+        let z = match z {
+            Some(GenericArgument::Type(Type::Tuple(v)) ) => {Some(v)},
+            _ => {None},
+        };
+
+        if let Some(x) = z{
+          println!("V1: {}, V2: {}, V3: {}", is_return_ty, is_struct_field, convert_tuple_to_variadic);
+          if rust_ty == "FnArgs" && !(is_return_ty | is_struct_field) {
+            return  ty_to_ts_type(&Type::Tuple(x.clone()), false, false, true);
+          }
+        }
+        println!("TEST: {:?}",z);
         let args = if let syn::PathArguments::AngleBracketed(arguments) = arguments {
           arguments
             .args
@@ -501,7 +520,7 @@ pub fn ty_to_ts_type(
           ts_ty = type_alias.or(Some((rust_ty, false)));
         }
       }
-
+      
       let (ty, is_optional) = ts_ty.unwrap_or_else(|| ("any".to_owned(), false));
       (
         (convert_tuple_to_variadic && !is_return_ty)
@@ -532,5 +551,7 @@ pub fn ty_to_ts_type(
       ("any[]".to_owned(), false)
     }
     _ => ("any".to_owned(), false),
-  }
+  };
+  println!("RES: {:?}",res);
+  res
 }
