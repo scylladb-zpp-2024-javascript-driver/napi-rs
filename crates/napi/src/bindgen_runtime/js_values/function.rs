@@ -52,7 +52,7 @@ macro_rules! impl_tuple_conversion {
       }
     }
 
-    impl<$($ident: FromNapiValue),*> TupleFromSliceValues for ($($ident,)*) {
+    impl<$($ident: FromNapiValue),*> TupleFromSliceValues for FnArgs<($($ident,)*)> {
       unsafe fn from_slice_values(env: sys::napi_env, values: &[sys::napi_value]) -> $crate::Result<Self> {
         #[allow(non_snake_case)]
         let [$($ident),*] = values.try_into().map_err(|_| crate::Error::new(
@@ -61,7 +61,7 @@ macro_rules! impl_tuple_conversion {
         ))?;
         Ok(($(
           unsafe { $ident::from_napi_value(env, $ident)?}
-        ,)*))
+        ,)*).into())
       }
     }
   };

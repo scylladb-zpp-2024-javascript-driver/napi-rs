@@ -74,7 +74,8 @@ pub fn test_nest_create_function_from_closure(ctx: CallContext) -> Result<Functi
             Ok(())
           })?;
 
-      let on_handle = obj.get_named_property::<Function<FnArgs<(String, Function<(), ()>)>, ()>>("on")?;
+      let on_handle =
+        obj.get_named_property::<Function<FnArgs<(String, Function<(), ()>)>, ()>>("on")?;
       let handle_name = String::from("on");
       on_handle.call((handle_name, nest_func).into())?;
       Ok(())
